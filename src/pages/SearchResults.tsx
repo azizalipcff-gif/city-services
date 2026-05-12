@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Star, MessageCircle, CheckCircle2, Compass } from 'lucide-react';
+import { MapPin, Star, CheckCircle2, Compass } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { businessService } from '../lib/businessService';
@@ -12,19 +13,16 @@ const cities = ['Oujda', 'Nador', 'Berkane', 'Fes', 'Casablanca', 'Rabat', 'Marr
 const SearchResults = () => {
   const location = useLocation();
   const { showToast } = useToast();
-  const [searchValue, setSearchValue] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const queryParams = new URLSearchParams(location.search);
   const query = queryParams.get('q') || '';
   const city = queryParams.get('city') || '';
 
-  useEffect(() => {
-    setSearchValue(query);
-    setCityFilter(city);
-  }, [query, city]);
+  const [searchValue, setSearchValue] = useState(query);
+  const [cityFilter, setCityFilter] = useState(city);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -34,14 +32,15 @@ const SearchResults = () => {
         const { data, error } = await businessService.search(query, city);
         if (error) throw error;
         setResults(data || []);
-      } catch (error: any) {
-        showToast(error?.message || 'Search failed', 'error');
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Search failed';
+        showToast(message, 'error');
       }
       setLoading(false);
     };
 
     fetchResults();
-  }, [query, city]);
+  }, [query, city, showToast]);
 
   return (
     <div className="min-h-screen bg-[#071126] text-white">

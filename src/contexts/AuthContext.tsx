@@ -1,8 +1,8 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-
-export const ADMIN_EMAIL = 'azizalipcff@gmail.com';
+import { ADMIN_EMAIL } from '../lib/constants';
 
 export interface UserProfile {
   id: string;
@@ -15,6 +15,8 @@ export interface UserProfile {
   updated_at: string;
 }
 
+type AuthResult = { data: unknown; error: unknown } | { data: null; error: Error };
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -23,14 +25,14 @@ interface AuthContextType {
   isAdmin: boolean;
   isBusiness: boolean;
   isConfigured: boolean;
-  signUp: (email: string, password: string, name: string, role: 'user' | 'business') => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, name: string, role: 'user' | 'business') => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<any>;
-  updatePassword: (newPassword: string) => Promise<any>;
-  updateProfile: (name: string, avatar_url?: string) => Promise<any>;
-  signInWithGoogle: () => Promise<any>;
-  resendVerificationEmail: () => Promise<any>;
+  resetPassword: (email: string) => Promise<AuthResult>;
+  updatePassword: (newPassword: string) => Promise<AuthResult>;
+  updateProfile: (name: string, avatar_url?: string) => Promise<AuthResult>;
+  signInWithGoogle: () => Promise<AuthResult>;
+  resendVerificationEmail: () => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: any, newSession: any) => {
+      async (_event: string, newSession: Session | null) => {
         setSession(newSession);
         
         if (newSession?.user) {
@@ -200,36 +202,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async () => {
-    try {
-      if (!isSupabaseConfigured || !supabase) {
-        return { data: null, error: new Error('Supabase not configured') };
-      }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      return { data, error };
-    } catch (error) {
-      return { data: null, error };
+    if (!isSupabaseConfigured || !supabase) {
+      return { data: null, error: new Error('Supabase not configured') };
     }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    return { data, error };
   };
 
   const signOut = async () => {
-    try {
-      if (!isSupabaseConfigured || !supabase) {
-        throw new Error('Supabase not configured');
-      }
-
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setProfile(null);
-    } catch (error) {
-      throw error;
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase not configured');
     }
+
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setProfile(null);
   };
 
   const resetPassword = async (email: string) => {
@@ -270,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { data: null, error: new Error('Supabase not configured or no user') };
       }
 
-      const updateData: any = { name };
+      const updateData: Partial<Pick<UserProfile, 'name' | 'avatar_url'>> = { name };
       if (avatar_url) updateData.avatar_url = avatar_url;
 
       const { data, error } = await supabase

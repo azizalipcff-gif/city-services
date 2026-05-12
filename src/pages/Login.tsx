@@ -26,7 +26,7 @@ const Login = () => {
         showToast('Login successful!', 'success');
         navigate('/');
       }
-    } catch (error) {
+    } catch {
       showToast('An error occurred', 'error');
     }
     setIsLoading(false);

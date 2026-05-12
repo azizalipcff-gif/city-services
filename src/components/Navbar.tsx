@@ -28,7 +28,7 @@ const Navbar = () => {
       await signOut();
       showToast('Signed out successfully', 'success');
       navigate('/');
-    } catch (error) {
+    } catch {
       showToast('Error signing out', 'error');
     }
   };

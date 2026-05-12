@@ -40,8 +40,9 @@ const ResetPassword = () => {
         setSuccess(true);
         showToast('Password updated successfully', 'success');
       }
-    } catch (error: any) {
-      showToast(error?.message || 'Unable to reset password', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unable to reset password';
+      showToast(message, 'error');
     }
     setLoading(false);
   };

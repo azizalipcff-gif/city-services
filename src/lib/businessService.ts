@@ -1,46 +1,5 @@
 import { supabase } from '../lib/supabase';
-
-
-export interface Business {
-  id: string;
-  owner_id: string;
-  name: string;
-  slug: string;
-  category: string;
-  description: string;
-  city: string;
-  address: string;
-  phone: string;
-  whatsapp: string | null;
-  email: string | null;
-  website: string | null;
-  logo_url: string | null;
-  cover_url: string | null;
-  gallery_urls: string[] | null;
-  rating: number;
-  reviews_count: number;
-  verified: boolean;
-  featured: boolean;
-  approved: boolean;
-  price_range: '$' | '$$' | '$$$';
-  coordinates_lat: number | null;
-  coordinates_lng: number | null;
-  social_facebook: string | null;
-  social_instagram: string | null;
-  opening_hours: Array<{ day: string; hours: string }> | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Review {
-  id: string;
-  business_id: string;
-  user_id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { Business } from './types';
 
 // BUSINESS CRUD OPERATIONS
 export const businessService = {
@@ -317,7 +276,7 @@ export const reviewService = {
 
       if (reviews && reviews.length > 0) {
         const avgRating =
-          reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length;
+          reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviews.length;
 
         await supabase
           .from('businesses')
@@ -526,6 +485,25 @@ export const adminService = {
         .from('businesses')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  },
+
+  // Get featured businesses
+  async getFeatured(limit = 20) {
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('approved', true)
+        .eq('verified', true)
+        .eq('featured', true)
+        .order('rating', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
       return { data, error: null };

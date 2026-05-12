@@ -70,8 +70,9 @@ const Register = () => {
         showToast('Registration successful! Please check your email to verify your account.', 'success');
         navigate('/login');
       }
-    } catch (error: any) {
-      showToast(error?.message || 'An error occurred', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An error occurred';
+      showToast(message, 'error');
     }
     setIsLoading(false);
   };
@@ -83,8 +84,8 @@ const Register = () => {
       if (error) {
         showToast(error.message || 'Google sign-up failed', 'error');
       }
-    } catch (error: any) {
-      showToast(error?.message || 'An error occurred', 'error');
+    } catch {
+      showToast('An error occurred', 'error');
     }
     setIsGoogleLoading(false);
   };
